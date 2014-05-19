@@ -149,15 +149,20 @@ window.carmageddon = (function () {
       return;
     }
 
-    var record = this.readNextRecord();
-    alert("First record: \n" + JSON.stringify(record, null, '    '));
+    var records = [];
+    while (this.cursor < this.data.byteLength) {
+      records.push(this.readNextRecord());
+    }
+
+    alert("Records: \n" + JSON.stringify(records, null, '    '));
+
     //alert(JSON.stringify(this.datModel, null, '    '));
   };
 
   DatFileReader.prototype.readNextRecord = function () {
     var record = new Record(this.data.buffer, this.cursor);
 
-    this.cursor += record.data.byteOffset + record.byteLength;
+    this.cursor = record.data.byteOffset + record.byteLength;
 
     return record;
   };
