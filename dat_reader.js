@@ -4,7 +4,7 @@ window.carmageddon = (function () {
   var datFileInput = document.querySelector('#dat-file-input');
   datFileInput.addEventListener('change', function (e) {
     console.log("Dat FILE CHANGED!", e);
-    var reader = new DatFileReader({file: e.target.files[0]});
+    var reader = new StainlessFileReader({file: e.target.files[0]});
   });
 
   var BYTE  = 1,
@@ -14,7 +14,7 @@ window.carmageddon = (function () {
 
   var HEADER      = 0x12,
       MODEL_ATTRS = 0x36,
-      VERTICES   = 0x17,
+      VERTICES    = 0x17,
       TEX_COORDS  = 0x18,
       FACES       = 0x35,
       MAT_NAMES   = 0x16,
@@ -26,15 +26,6 @@ window.carmageddon = (function () {
   READ_MAP[INT]   = [2, 'Uint16'];
   READ_MAP[WORD]  = [4, 'Uint32'];
   READ_MAP[FLOAT] = [4, 'Float32'];
-
-  function DatModel () {
-    this.meshes = [];
-    this.vertices = [];
-    this.uvs = [];
-    this.faces = [];
-    this.materialNames = [];
-    this.faceMaterials = [];
-  }
 
   function Record (buffer, offset) {
     this.cursor = 0;
@@ -94,7 +85,7 @@ window.carmageddon = (function () {
     var count = this.readWord();
     var verts = [];
     for (var i = 0; i < count; i++) {
-      verts[i] = [this.readFloat(), this.readFloat(), this.readFloat()];
+      verts[i] = {x: this.readFloat(), y: this.readFloat(), z: this.readFloat()};
     }
 
     this.vertices = verts;
@@ -128,10 +119,9 @@ window.carmageddon = (function () {
 
 
 
-  function DatFileReader (options) {
+  function StainlessFileReader (options) {
     options || (options = {});
 
-    this.datModel = new DatModel();
     this.cursor = 0;
 
     if (options.file) {
@@ -143,13 +133,13 @@ window.carmageddon = (function () {
     }
   }
 
-  DatFileReader.prototype.onFileLoad = function (e) {
+  StainlessFileReader.prototype.onFileLoad = function (e) {
     console.log("FILE LOADED!", this.fileReader.result.byteLength);
     this.data = new DataView(this.fileReader.result);
     this.parseArrayBuffer();
   };
 
-  DatFileReader.prototype.parseArrayBuffer = function () {
+  StainlessFileReader.prototype.parseArrayBuffer = function () {
     this.cursor = 0;
 
     var header = this.readNextRecord();
@@ -158,13 +148,6 @@ window.carmageddon = (function () {
       alert("I have no idea how to read this file");
       return;
     }
-
-    /*
-      if (header.readWord() != 0xFACE) {
-        alert("This isn't a DAT file.");
-        return;
-      }
-    */
 
     var records = [];
     while (this.cursor < this.data.byteLength) {
@@ -176,7 +159,7 @@ window.carmageddon = (function () {
     //alert(JSON.stringify(this.datModel, null, '    '));
   };
 
-  DatFileReader.prototype.readNextRecord = function () {
+  StainlessFileReader.prototype.readNextRecord = function () {
     var record = new Record(this.data.buffer, this.cursor);
 
     this.cursor = record.data.byteOffset + record.byteLength;
@@ -185,7 +168,6 @@ window.carmageddon = (function () {
   };
 
   return {
-    DatModel: DatModel,
-    DatFileReader: DatFileReader
+    StainlessFileReader: StainlessFileReader
   };
 })();
