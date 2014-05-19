@@ -59,6 +59,10 @@ window.carmageddon = (function () {
         this.parseVertices();
         break;
 
+      case FACES:
+        this.parseFaces();
+        break;
+
       default:
         console.warn("Skipping unknown record type:", this.type);
     }
@@ -89,6 +93,26 @@ window.carmageddon = (function () {
     }
 
     this.vertices = verts;
+  };
+
+  Record.prototype.parseFaces = function () {
+    var count = this.readWord();
+
+    var faces = [];
+    for (var i = 0; i < count; i++) {
+      faces[i] = [
+        this.readInt(),
+        this.readInt(),
+        this.readInt()
+      ];
+
+      // Skip unknown thing
+      this.readByte();
+      this.readByte();
+      this.readByte();
+    }
+
+    this.faces = faces;
   };
 
 
