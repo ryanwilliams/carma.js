@@ -41,23 +41,43 @@ window.carmageddon = (function () {
 
     switch (this.type) {
       case HEADER:
+        console.log("Parsing header");
         this.parseHeader();
         break;
 
       case MODEL_ATTRS:
+        console.log("Parsing model name");
         this.parseModelAttributes();
         break;
 
       case VERTICES:
+        console.log("Parsing vertices");
         this.parseVertices();
         break;
 
       case FACES:
+        console.log("Parsing faces");
         this.parseFaces();
         break;
 
+      case TEX_COORDS:
+        console.log("Parsing texture coords");
+        break;
+
+      case MAT_NAMES:
+        console.log("Parsing material names");
+        break;
+
+      case MAT_FACES:
+        console.log("Parsing material faces");
+        break;
+
+      case 0:
+        // Ignore type 0
+        break;
+
       default:
-        //console.warn("Skipping unknown record type:", this.type);
+        console.warn("Skipping unknown record type:", this.type);
     }
   }
 

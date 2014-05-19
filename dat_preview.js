@@ -21,40 +21,50 @@
 
 
       var material = new THREE.MeshLambertMaterial({color: 0x00ff00});
-      var geometry = new THREE.Geometry();
 
 
-      var i, l;
-      var record = reader.records[1];
-      for (i = 0, l = record.vertices.length; i < l; i++) {
-        var v = record.vertices[i];
-        geometry.vertices.push(new THREE.Vector3(v.x, v.y, v.z));
+      var models = [];
+
+      var geometry;
+      var i, j;
+      for (i = 0; i < reader.records.length; i++) {
+        var record = reader.records[i];
+        console.log("RECORD", record);
+
+        if (record.vertices) {
+          geometry = new THREE.Geometry();
+
+          for (j = 0; j < record.vertices.length; j++) {
+            var v = record.vertices[j];
+            geometry.vertices.push(new THREE.Vector3(v.x, v.y, v.z));
+          }
+        }
+
+        else if (record.faces) {
+          for (j = 0; j < record.faces.length; j++) {
+            var f = record.faces[j];
+            geometry.faces.push(new THREE.Face3(f[0], f[1], f[2]));
+          }
+          geometry.computeFaceNormals();
+          geometry.computeBoundingBox();
+          var model = new THREE.Mesh(geometry, material);
+          models.push(model);
+          scene.add(model);
+        }
       }
 
-      record = reader.records[3];
-      for (i = 0, l = record.faces.length; i < l; i++) {
-        var f = record.faces[i];
-        geometry.faces.push(new THREE.Face3(f[0], f[1], f[2]));
-      }
-      geometry.computeBoundingSphere();
-
-      var model = new THREE.Mesh(geometry, material);
 
 
-      scene.add(model);
 
-      model.rotation.x = 0.5;
+
       camera.position.z = 1;
 
-      console.log(geometry);
-
-
       // add subtle blue ambient lighting
-      var ambientLight = new THREE.AmbientLight(0x009900);
+      var ambientLight = new THREE.AmbientLight(0x333333);
       scene.add(ambientLight);
 
       // directional lighting
-      var directionalLight = new THREE.DirectionalLight(0x999999);
+      var directionalLight = new THREE.DirectionalLight(0xffffff);
       directionalLight.position.set(1, 1, 1).normalize();
       scene.add(directionalLight);
 
@@ -62,7 +72,11 @@
         requestAnimationFrame(render);
         renderer.render(scene, camera);
 
-        model.rotation.y += 0.05;
+        for (i = 0; i < models.length; i++) {
+          var m = models[i];
+          m.rotation.x = 0.5;
+          m.rotation.y += 0.05;
+        }
       }
       render();
 
