@@ -1,12 +1,5 @@
 // Thanks to: http://rr2000.toshiba-3.com/R4/PC/C2FORMAT.TXT
 window.carmageddon = (function () {
-  // When input changes, load the file!
-  var datFileInput = document.querySelector('#dat-file-input');
-  datFileInput.addEventListener('change', function (e) {
-    console.log("Dat FILE CHANGED!", e);
-    var reader = new StainlessFileReader({file: e.target.files[0]});
-  });
-
   var BYTE  = 1,
       INT   = 2,
       WORD  = 3,
@@ -48,11 +41,11 @@ window.carmageddon = (function () {
 
     switch (this.type) {
       case HEADER:
-        this.parseHeader()
+        this.parseHeader();
         break;
 
       case MODEL_ATTRS:
-        this.parseModelAttributes()
+        this.parseModelAttributes();
         break;
 
       case VERTICES:
@@ -64,11 +57,12 @@ window.carmageddon = (function () {
         break;
 
       default:
-        console.warn("Skipping unknown record type:", this.type);
+        //console.warn("Skipping unknown record type:", this.type);
     }
   }
 
   Record.prototype.parseHeader = function () {
+    this.filetype = this.readWord();
   };
 
   Record.prototype.parseModelAttributes = function () {
@@ -144,7 +138,7 @@ window.carmageddon = (function () {
 
 
   function StainlessFileReader (options) {
-    options || (options = {});
+    options = options || {};
 
     this.cursor = 0;
 
@@ -155,7 +149,36 @@ window.carmageddon = (function () {
       this.fileReader.addEventListener('load', this.onFileLoad.bind(this));
       this.fileReader.readAsArrayBuffer(this.file);
     }
+
+    (function (that) {
+      // Cheeky DOM element to fake events
+      var el = document.createElement('div');
+
+      that.addEventListener = function (type, callback) {
+        el.addEventListener(type, function (e) {
+          callback({target: that});
+        });
+      };
+
+      that.dispatchEvent = function (event) {
+        el.dispatchEvent(event);
+      };
+    })(this);
   }
+
+  StainlessFileReader.prototype.toJSON = function () {
+    if (this.header && this.header.filetype === 0xFACE) {
+      return this.toJSONModel();
+    }
+
+    return this;
+  };
+
+  StainlessFileReader.prototype.toJSONModel = function () {
+    return {
+      vertices: []
+    };
+  };
 
   StainlessFileReader.prototype.onFileLoad = function (e) {
     console.log("FILE LOADED!", this.fileReader.result.byteLength);
@@ -166,19 +189,22 @@ window.carmageddon = (function () {
   StainlessFileReader.prototype.parseArrayBuffer = function () {
     this.cursor = 0;
 
-    var header = this.readNextRecord();
+    this.header = this.readNextRecord();
 
-    if (header.type != HEADER) {
+    if (this.header.type != HEADER) {
       alert("I have no idea how to read this file");
       return;
     }
 
-    var records = [];
+    this.records = [];
     while (this.cursor < this.data.byteLength) {
-      records.push(this.readNextRecord());
+      this.records.push(this.readNextRecord());
     }
 
-    alert("Records: \n" + JSON.stringify(records, null, '  '));
+    // All read, trigger event
+    this.dispatchEvent(new Event('load'));
+
+    //alert("Records: \n" + JSON.stringify(records, null, '  '));
 
     //alert(JSON.stringify(this.datModel, null, '    '));
   };
@@ -192,6 +218,7 @@ window.carmageddon = (function () {
   };
 
   return {
+    Record: Record,
     StainlessFileReader: StainlessFileReader
   };
 })();
