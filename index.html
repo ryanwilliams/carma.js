@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Carmageddon DAT Preview</title>
+
+    <style>
+      #dat-preview {
+        width: 480px;
+        height: 360px;
+        background: #555;
+      }
+    </style>
+  </head>
+
+  <body>
+    <p>Select a DAT file then click the button</p>
+
+    <form action="#">
+      <input type="file" id="dat-file-input">
+    </form>
+
+    <div id="dat-preview">
+    </div>
+
+    <script src="dat_reader.js"></script>
+    <script src="dat_preview.js"></script>
+  </body>
+</html>
