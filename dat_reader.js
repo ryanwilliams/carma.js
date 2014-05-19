@@ -1,3 +1,4 @@
+// Thanks to: http://rr2000.toshiba-3.com/R4/PC/C2FORMAT.TXT
 window.carmageddon = (function () {
   // When input changes, load the file!
   var datFileInput = document.querySelector('#dat-file-input');
@@ -13,7 +14,7 @@ window.carmageddon = (function () {
 
   var HEADER      = 0x12,
       MODEL_ATTRS = 0x36,
-      VERTICIES   = 0x17,
+      VERTICES   = 0x17,
       TEX_COORDS  = 0x18,
       FACES       = 0x35,
       MAT_NAMES   = 0x16,
@@ -63,6 +64,10 @@ window.carmageddon = (function () {
         this.parseModelAttributes()
         break;
 
+      case VERTICES:
+        this.parseVertices();
+        break;
+
       default:
         console.warn("Skipping unknown record type:", this.type);
     }
@@ -83,6 +88,16 @@ window.carmageddon = (function () {
     }
 
     this.modelName = name;
+  };
+
+  Record.prototype.parseVertices = function () {
+    var count = this.readWord();
+    var verts = [];
+    for (var i = 0; i < count; i++) {
+      verts[i] = [this.readFloat(), this.readFloat(), this.readFloat()];
+    }
+
+    this.vertices = verts;
   };
 
 
@@ -144,17 +159,19 @@ window.carmageddon = (function () {
       return;
     }
 
-    if (header.readWord() != 0xFACE) {
-      alert("This isn't a DAT file.");
-      return;
-    }
+    /*
+      if (header.readWord() != 0xFACE) {
+        alert("This isn't a DAT file.");
+        return;
+      }
+    */
 
     var records = [];
     while (this.cursor < this.data.byteLength) {
       records.push(this.readNextRecord());
     }
 
-    alert("Records: \n" + JSON.stringify(records, null, '    '));
+    alert("Records: \n" + JSON.stringify(records, null, '  '));
 
     //alert(JSON.stringify(this.datModel, null, '    '));
   };
