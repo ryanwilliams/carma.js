@@ -11,13 +11,13 @@ window.carmageddon = (function () {
       WORD  = 3,
       FLOAT = 4;
 
-  var HEADER     = 0x12,
-      MODEL_NAME = 0x36,
-      VERTICIES  = 0x17,
-      TEX_COORDS = 0x18,
-      FACES      = 0x35,
-      MAT_NAMES  = 0x16,
-      MAT_FACES  = 0x1A;
+  var HEADER      = 0x12,
+      MODEL_ATTRS = 0x36,
+      VERTICIES   = 0x17,
+      TEX_COORDS  = 0x18,
+      FACES       = 0x35,
+      MAT_NAMES   = 0x16,
+      MAT_FACES   = 0x1A;
 
   // How many bytes and which methods to use for each value type
   var READ_MAP = {};
@@ -53,7 +53,37 @@ window.carmageddon = (function () {
 
     // Offset by 8 bytes to skip the record header
     this.data = new DataView(buffer, offset + 8, length);
+
+    switch (this.type) {
+      case HEADER:
+        this.parseHeader()
+        break;
+
+      case MODEL_ATTRS:
+        this.parseModelAttributes()
+        break;
+
+      default:
+        console.warn("Skipping unknown record type:", this.type);
+    }
   }
+
+  Record.prototype.parseHeader = function () {
+  };
+
+  Record.prototype.parseModelAttributes = function () {
+    // Unknown bytes, skip 'em
+    this.readByte();
+    this.readByte();
+
+    var name = "";
+    var byte;
+    while ((byte = this.readByte()) !== 0x00) {
+      name += String.fromCharCode(byte);
+    }
+
+    this.modelName = name;
+  };
 
 
   Record.prototype.readValue = function (type) {
@@ -119,11 +149,17 @@ window.carmageddon = (function () {
       return;
     }
 
-    alert(JSON.stringify(this.datModel, null, '    '));
+    var record = this.readNextRecord();
+    alert("First record: \n" + JSON.stringify(record, null, '    '));
+    //alert(JSON.stringify(this.datModel, null, '    '));
   };
 
   DatFileReader.prototype.readNextRecord = function () {
-    return new Record(this.data.buffer, this.cursor);
+    var record = new Record(this.data.buffer, this.cursor);
+
+    this.cursor += record.data.byteOffset + record.byteLength;
+
+    return record;
   };
 
   return {
