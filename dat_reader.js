@@ -75,6 +75,7 @@ window.carmageddon = (function () {
 
       case MAT_FACES:
         console.log("Parsing material faces");
+        this.parseMaterialFaces();
         break;
 
       case MAT_ATTRS:
@@ -182,6 +183,20 @@ window.carmageddon = (function () {
 
     this.byteLength = length;
     this.materialNames = names;
+  };
+
+  Record.prototype.parseMaterialFaces = function () {
+    var count = this.readWord();
+
+    // Unknown thing
+    this.readWord();
+
+    var faces = [];
+    for (var i = 0; i < count; i++) {
+      faces[i] = this.readInt();
+    }
+
+    this.materialFaces = faces;
   };
 
   Record.prototype.parseMaterialAttributes = function () {
