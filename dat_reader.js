@@ -65,6 +65,7 @@ window.carmageddon = (function () {
 
       case TEX_COORDS:
         console.log("Parsing texture coords");
+        this.parseTextureCoords();
         break;
 
       case MAT_NAMES:
@@ -141,6 +142,17 @@ window.carmageddon = (function () {
     }
 
     this.faces = faces;
+  };
+
+  Record.prototype.parseTextureCoords = function () {
+    var count = this.readWord();
+
+    var coords = [];
+    for (var i = 0; i < count; i++) {
+      coords[i] = {x: this.readFloat(), y: this.readFloat()};
+    }
+
+    this.textureCoords = coords;
   };
 
   /**
