@@ -5,6 +5,7 @@ window.carmageddon = (function () {
       WORD  = 3,
       FLOAT = 4;
 
+  // .DAT File
   var HEADER      = 0x12,
       MODEL_ATTRS = 0x36,
       VERTICES    = 0x17,
@@ -12,6 +13,10 @@ window.carmageddon = (function () {
       FACES       = 0x35,
       MAT_NAMES   = 0x16,
       MAT_FACES   = 0x1A;
+
+  // .MAT File
+  var MAT_ATTRS   = 0x3C,
+      IMG_NAME    = 0x1C;
 
   // How many bytes and which methods to use for each value type
   var READ_MAP = {};
@@ -69,6 +74,16 @@ window.carmageddon = (function () {
 
       case MAT_FACES:
         console.log("Parsing material faces");
+        break;
+
+      case MAT_ATTRS:
+        console.log("Parsing material attributes");
+        this.parseMaterialAttributes();
+        break;
+
+      case IMG_NAME:
+        console.log("Parsing image name");
+        this.parseImageName();
         break;
 
       case 0:
@@ -157,6 +172,48 @@ window.carmageddon = (function () {
     this.materialNames = names;
   };
 
+  Record.prototype.parseMaterialAttributes = function () {
+    var color = this.readWord(),
+        ambLight = this.readWord(),
+        dirLight = this.readWord(),
+        specLight = this.readWord(),
+        specPower = this.readWord(),
+        flags = this.readWord(),
+        transMatrix = this.read2DMatrix(),
+        unknown = this.readWord();
+
+    // Null 13 byte marker
+    for (var i = 0; i < 13; i++) {
+      this.readByte();
+    }
+
+
+    // Length of above stuff added up
+    var length = 65;
+
+    var name = "";
+    var byte;
+    while ((byte = this.readByte()) !== 0x00) {
+      name += String.fromCharCode(byte);
+      length++;
+    }
+    length++; // for the 0x00
+
+
+    this.byteLength = length;
+    this.materialName = name;
+  };
+
+  Record.prototype.parseImageName = function () {
+    var name = "";
+    var byte;
+    while ((byte = this.readByte()) !== 0x00) {
+      name += String.fromCharCode(byte);
+    }
+
+    this.imageName = name;
+  };
+
 
   Record.prototype.readValue = function (type) {
     var value = this.data['get' + READ_MAP[type][1]](this.cursor);
@@ -179,6 +236,18 @@ window.carmageddon = (function () {
 
   Record.prototype.readFloat = function () {
     return this.readValue(FLOAT);
+  };
+
+  Record.prototype.read2DMatrix = function () {
+    // TODO format into 2d array?
+    return [
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat(),
+      this.readFloat()
+    ];
   };
 
 
@@ -246,7 +315,11 @@ window.carmageddon = (function () {
 
     this.records = [];
     while (this.cursor < this.data.byteLength) {
-      this.records.push(this.readNextRecord());
+      var record = this.readNextRecord();
+      if (record.type === 0) {
+        continue;
+      }
+      this.records.push(record);
     }
 
     // All read, trigger event
