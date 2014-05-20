@@ -25,19 +25,17 @@ window.carmageddon = (function () {
 
     var view = new DataView(buffer, offset);
 
-    var type = view.getUint32(0),
-        length = view.getUint32(4);
+    this.type = view.getUint32(0);
+    this.byteOffset = offset;
+    this.byteLength = view.getUint32(4);
 
     if (length > buffer.byteLength - offset) {
       alert("Read past end of buffer; aborting");
       return;
     }
 
-    this.type = type;
-    this.byteLength = length;
-
     // Offset by 8 bytes to skip the record header
-    this.data = new DataView(buffer, offset + 8, length);
+    this.data = new DataView(buffer, offset + 8);
 
     switch (this.type) {
       case HEADER:
@@ -66,6 +64,7 @@ window.carmageddon = (function () {
 
       case MAT_NAMES:
         console.log("Parsing material names");
+        this.parseMaterialNames();
         break;
 
       case MAT_FACES:
@@ -127,6 +126,36 @@ window.carmageddon = (function () {
     }
 
     this.faces = faces;
+  };
+
+  /**
+   * Material record length is often wrong, so will be corrected during parsing
+   */
+  Record.prototype.parseMaterialNames = function () {
+    var count = this.readWord();
+
+    // keep track of length so we can fix it
+    var length = 4; // count is 4 bytes
+
+    var names = []
+
+    var name = "";
+    var byte;
+    for (var i = 0; i < count; i++) {
+      while ((byte = this.readByte()) !== 0x00) {
+        name += String.fromCharCode(byte);
+        length++;
+      }
+      length++; // for the 0x00
+
+      names.push(name);
+      name = "";
+    }
+
+
+    debugger;
+    this.byteLength = length;
+    this.materialNames = names;
   };
 
 
