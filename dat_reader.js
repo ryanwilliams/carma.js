@@ -153,7 +153,6 @@ window.carmageddon = (function () {
     }
 
 
-    debugger;
     this.byteLength = length;
     this.materialNames = names;
   };
